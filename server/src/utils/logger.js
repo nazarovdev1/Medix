@@ -25,8 +25,8 @@ const logger = winston.createLogger({
   ],
 });
 
-// File logging in production
-if (config.env === 'production') {
+// File logging in production (disabled on Vercel due to read-only FS)
+if (config.env === 'production' && !process.env.VERCEL) {
   const DailyRotateFile = require('winston-daily-rotate-file');
   logger.add(new DailyRotateFile({
     filename: path.join(config.log.dir, 'error-%DATE%.log'),
