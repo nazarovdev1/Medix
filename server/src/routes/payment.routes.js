@@ -7,7 +7,7 @@ const { authenticate, authorize } = require('../middlewares/auth.middleware');
 
 router.use(authenticate);
 
-router.get('/',    authorize('admin'), validate(schema.list),      ctrl.getAll);
+router.get('/',    authorize('admin','doctor'), validate(schema.list),      ctrl.getAll);
 router.get('/:id', authorize('admin','doctor','patient'), validate(schema.uuidParam), ctrl.getById);
 router.post('/',   authorize('admin'), validate(schema.create),    ctrl.create);
 router.patch('/:id/status', authorize('admin'), validate(schema.updateStatus), ctrl.updateStatus);

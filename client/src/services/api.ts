@@ -1,12 +1,17 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
 
-// ─── Request Interceptor — attach access token ───────────────
+interface AxiosRequestConfigWithRetry extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -16,20 +21,16 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ─── Response Interceptor — handle token refresh ─────────────
 api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
-    const original = error.config;
+    const original = error.config as AxiosRequestConfigWithRetry;
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('No refresh token');
-        const res = await axios.post(
-          `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/refresh`,
-          { refreshToken }
-        );
+        const res = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
         const { accessToken } = res.data.data;
         localStorage.setItem('accessToken', accessToken);
         original.headers.Authorization = `Bearer ${accessToken}`;

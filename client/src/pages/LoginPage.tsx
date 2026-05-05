@@ -1,27 +1,28 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginUser, clearError } from '../features/auth/authSlice';
 import toast from 'react-hot-toast';
-
+import type { LoginCredentials } from '../types';
 import { MdHealthAndSafety } from 'react-icons/md';
 
 export default function LoginPage() {
-  const [form, setForm]   = useState({ email: '', password: '' });
-  const dispatch          = useDispatch();
-  const navigate          = useNavigate();
-  const { isLoading, error } = useSelector((s) => s.auth);
+  const [form, setForm] = useState<LoginCredentials>({ email: '', password: '' });
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { isLoading, error } = useAppSelector((s) => s.auth);
 
-  const handleChange = (e) => {
-    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
     if (error) dispatch(clearError());
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const result = await dispatch(loginUser(form));
     if (loginUser.fulfilled.match(result)) {
-      toast.success('Welcome back!');
+      toast.success('Qaytdingiz!');
       navigate('/');
     }
   };
@@ -32,20 +33,20 @@ export default function LoginPage() {
         <div className="auth-logo">
           <div className="logo-icon-lg" style={{ color: 'var(--primary-light)' }}><MdHealthAndSafety /></div>
           <h1>Medix</h1>
-          <p>Clinic Management System</p>
+          <p>Klinika Boshqaruv Tizimi</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="alert alert-error">{error}</div>}
 
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">Email Manzili</label>
             <input
               id="login-email"
               name="email"
               type="email"
               className="form-input"
-              placeholder="doctor@clinick.com"
+              placeholder="doktor@kasalxonacha.uz"
               value={form.email}
               onChange={handleChange}
               required
@@ -53,7 +54,7 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label">Parol</label>
             <input
               id="login-password"
               name="password"
@@ -67,15 +68,15 @@ export default function LoginPage() {
           </div>
 
           <button id="login-submit" type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '13px' }} disabled={isLoading}>
-            {isLoading ? <><span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Signing in...</> : 'Sign In'}
+            {isLoading ? <><span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Kirish...</> : 'Kirish'}
           </button>
 
           <p style={{ textAlign: 'center', marginTop: 20, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Don't have an account? <Link to="/register">Register</Link>
+            Hisobingiz yo'qmi? <Link to="/register">Ro'yxatdan o'ting</Link>
           </p>
 
           <div style={{ marginTop: 24, padding: 16, background: 'rgba(79,110,247,0.07)', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 8 }}>Demo credentials:</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 8 }}>Demo ma'lumotlar:</p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Admin: admin@clinick.com / Password123!</p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Doctor: dr.smith@clinick.com / Password123!</p>
           </div>

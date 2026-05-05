@@ -1,26 +1,29 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from './app/hooks';
 import { fetchCurrentUser } from './features/auth/authSlice';
 
-import DashboardLayout  from './layouts/DashboardLayout';
-import LoginPage        from './pages/LoginPage';
-import RegisterPage     from './pages/RegisterPage';
-import DashboardPage    from './pages/DashboardPage';
-import PatientsPage     from './pages/PatientsPage';
-import DoctorsPage      from './pages/DoctorsPage';
+import DashboardLayout from './layouts/DashboardLayout';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import PatientsPage from './pages/PatientsPage';
+import DoctorsPage from './pages/DoctorsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
-import PaymentsPage     from './pages/PaymentsPage';
+import PaymentsPage from './pages/PaymentsPage';
 
-// Protected Route wrapper
-const ProtectedRoute = ({ children }) => {
-  const { isLoggedIn } = useSelector((state) => state.auth);
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
+  return isLoggedIn ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
 export default function App() {
-  const dispatch = useDispatch();
-  const { isLoggedIn } = useSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
 
   useEffect(() => {
     if (isLoggedIn) dispatch(fetchCurrentUser());

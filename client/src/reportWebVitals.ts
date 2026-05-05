@@ -1,4 +1,6 @@
-const reportWebVitals = onPerfEntry => {
+import { useCallback } from 'react';
+
+const reportWebVitals = (onPerfEntry?: (metric: unknown) => void) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
     import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
       getCLS(onPerfEntry);
