@@ -4,16 +4,20 @@ const db = require('../db/pool');
 class AppointmentRepository {
   async findAll(filters) {
     const { limit, offset, status, doctor_id, patient_id, date_from, date_to, sortBy, sortDir } = filters;
-    const params = [limit, offset];
     const conditions = ['a.is_deleted = FALSE'];
+    const filterParams = [];
 
-    if (status)     { params.push(status);     conditions.push(`a.status = $${params.length}`); }
-    if (doctor_id)  { params.push(doctor_id);  conditions.push(`a.doctor_id = $${params.length}`); }
-    if (patient_id) { params.push(patient_id); conditions.push(`a.patient_id = $${params.length}`); }
-    if (date_from)  { params.push(date_from);  conditions.push(`a.appt_date >= $${params.length}`); }
-    if (date_to)    { params.push(date_to);    conditions.push(`a.appt_date <= $${params.length}`); }
+    if (status)     { filterParams.push(status);     conditions.push(`a.status = $${filterParams.length + 2}`); }
+    if (doctor_id)  { filterParams.push(doctor_id);  conditions.push(`a.doctor_id = $${filterParams.length + 2}`); }
+    if (patient_id) { filterParams.push(patient_id); conditions.push(`a.patient_id = $${filterParams.length + 2}`); }
+    if (date_from)  { filterParams.push(date_from);  conditions.push(`a.appt_date >= $${filterParams.length + 2}`); }
+    if (date_to)    { filterParams.push(date_to);    conditions.push(`a.appt_date <= $${filterParams.length + 2}`); }
 
     const where = 'WHERE ' + conditions.join(' AND ');
+    
+    // For count query, we need to re-index the where clause to start from $1
+    const countWhere = where.replace(/\$(\d+)/g, (match, p1) => `$${parseInt(p1, 10) - 2}`);
+
     const sql = `
       SELECT a.*,
              p.first_name || ' ' || p.last_name AS patient_name,
@@ -26,9 +30,10 @@ class AppointmentRepository {
       ORDER BY a.${sortBy} ${sortDir}
       LIMIT $1 OFFSET $2
     `;
+
     const [rows, countRes] = await Promise.all([
-      db.query(sql, params),
-      db.query(`SELECT COUNT(*) FROM appointments a ${where}`, params.slice(2)),
+      db.query(sql, [limit, offset, ...filterParams]),
+      db.query(`SELECT COUNT(*) FROM appointments a ${countWhere}`, filterParams),
     ]);
     return { rows: rows.rows, total: parseInt(countRes.rows[0].count, 10) };
   }

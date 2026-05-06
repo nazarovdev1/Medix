@@ -21,8 +21,6 @@ const pool = new Pool({
 
 pool.on('connect', (client) => {
   logger.debug('Database pool connection established');
-  // Set statement_timeout to prevent long-running queries
-  client.query('SET statement_timeout = 30000').catch(() => {});
 });
 
 pool.on('error', (err) => {

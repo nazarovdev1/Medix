@@ -1,12 +1,23 @@
 'use strict';
 const appointmentService = require('../services/appointment.service');
+const doctorRepo         = require('../repositories/doctor.repository');
 const ApiResponse        = require('../utils/ApiResponse');
 const { writeAuditLog }  = require('../middlewares/auditLog.middleware');
 
 class AppointmentController {
   async getAll(req, res, next) {
     try {
-      const result = await appointmentService.getAll(req.query);
+      const query = { ...req.query };
+      
+      // If user is a doctor, they should only see their own appointments by default
+      if (req.user.role === 'doctor') {
+        const doctor = await doctorRepo.findByUserId(req.user.id);
+        if (doctor) {
+          query.doctor_id = doctor.id;
+        }
+      }
+
+      const result = await appointmentService.getAll(query);
       return res.json(new ApiResponse(200, result.rows, 'Appointments retrieved', result.meta));
     } catch (err) { next(err); }
   }
@@ -14,6 +25,14 @@ class AppointmentController {
   async getById(req, res, next) {
     try {
       const appt = await appointmentService.getById(req.params.id);
+      
+      if (req.user.role === 'doctor') {
+        const doctor = await doctorRepo.findByUserId(req.user.id);
+        if (doctor && appt.doctor_id !== doctor.id) {
+          return res.status(403).json(new ApiResponse(403, null, 'Ushbu turniga kirish huquqi yo\'q'));
+        }
+      }
+      
       return res.json(new ApiResponse(200, appt));
     } catch (err) { next(err); }
   }

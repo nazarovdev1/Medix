@@ -9,6 +9,7 @@ import type { DoctorFormData } from '../types';
 export default function DoctorsPage() {
   const dispatch = useAppDispatch();
   const { items, meta, isLoading } = useAppSelector((s) => s.doctors);
+  const user = useAppSelector((s) => s.auth.user);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<DoctorFormData>(defaultDoctorForm);
   const [search, setSearch] = useState('');
@@ -40,9 +41,11 @@ export default function DoctorsPage() {
           <h2>Doktorlar</h2>
           <p>{meta?.total ?? 0} ta xodimdor doktor</p>
         </div>
-        <button id="add-doctor-btn" className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <MdAdd /> Doktor Qo'shish
-        </button>
+        {user?.role === 'admin' && (
+          <button id="add-doctor-btn" className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <MdAdd /> Doktor Qo'shish
+          </button>
+        )}
       </div>
 
       <div className="filter-bar">
@@ -63,14 +66,15 @@ export default function DoctorsPage() {
           <thead>
             <tr>
               <th>Ism</th><th>Mutaxassislik</th><th>Email</th>
-              <th>Litsenziya No.</th><th>Bo'lim</th><th>Amallar</th>
+              <th>Litsenziya No.</th><th>Bo'lim</th>
+              {user?.role === 'admin' && <th>Amallar</th>}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={6}><div className="loading-center"><span className="spinner" /></div></td></tr>
+              <tr><td colSpan={user?.role === 'admin' ? 6 : 5}><div className="loading-center"><span className="spinner" /></div></td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>Doktor topilmadi</td></tr>
+              <tr><td colSpan={user?.role === 'admin' ? 6 : 5} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>Doktor topilmadi</td></tr>
             ) : items.map((d) => (
               <tr key={d.id}>
                 <td style={{ fontWeight: 600 }}>Dr. {d.first_name} {d.last_name}</td>
@@ -78,13 +82,15 @@ export default function DoctorsPage() {
                 <td style={{ color: 'var(--text-secondary)' }}>{d.email}</td>
                 <td style={{ color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '0.8rem' }}>{d.license_no}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{d.department_name || '—'}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-sm btn-secondary btn-icon" title="Schedule"><MdCalendarToday /></button>
-                    <button className="btn btn-sm btn-secondary btn-icon" title="Tahrirlash"><MdEdit /></button>
-                    <button className="btn btn-sm btn-danger btn-icon" title="O'chirish"><MdDelete /></button>
-                  </div>
-                </td>
+                {user?.role === 'admin' && (
+                  <td>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-sm btn-secondary btn-icon" title="Schedule"><MdCalendarToday /></button>
+                      <button className="btn btn-sm btn-secondary btn-icon" title="Tahrirlash"><MdEdit /></button>
+                      <button className="btn btn-sm btn-danger btn-icon" title="O'chirish"><MdDelete /></button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

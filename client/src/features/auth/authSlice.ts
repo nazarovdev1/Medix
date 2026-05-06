@@ -9,8 +9,12 @@ interface AuthState {
   error: string | null;
 }
 
+const storedUser = (() => {
+  try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
+})();
+
 const initialState: AuthState = {
-  user: null,
+  user: storedUser,
   isLoading: false,
   isLoggedIn: !!localStorage.getItem('accessToken'),
   error: null,
@@ -25,6 +29,7 @@ export const loginUser = createAsyncThunk<
     const res = await authService.login(credentials);
     localStorage.setItem('accessToken', res.accessToken);
     localStorage.setItem('refreshToken', res.refreshToken);
+    if (res.user) localStorage.setItem('user', JSON.stringify(res.user));
     return res;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Login failed';
@@ -51,11 +56,10 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authService.logout();
+    } catch { /* ignore */ } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-    } catch {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
     }
   }
 );
@@ -67,7 +71,10 @@ export const fetchCurrentUser = createAsyncThunk<
 >('auth/me', async (_, { rejectWithValue }) => {
   try {
     const res = await authService.me();
-    return res.user;
+    // Server returns { data: { id, email, role, ... } }, api interceptor unwraps to { data: ... }
+    const user = (res as any).data ?? res;
+    localStorage.setItem('user', JSON.stringify(user));
+    return user;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to fetch user';
     return rejectWithValue(message);
@@ -93,8 +100,9 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state) => { state.isLoading = false; })
       .addCase(registerUser.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload ?? null; })
       .addCase(logoutUser.fulfilled, (state) => { state.user = null; state.isLoggedIn = false; })
-      .addCase(fetchCurrentUser.fulfilled, (state, { payload }) => { state.user = payload; state.isLoggedIn = true; })
-      .addCase(fetchCurrentUser.rejected, (state) => { state.user = null; state.isLoggedIn = false; });
+      .addCase(fetchCurrentUser.pending, (state) => { state.isLoading = true; })
+      .addCase(fetchCurrentUser.fulfilled, (state, { payload }) => { state.isLoading = false; state.user = payload; state.isLoggedIn = true; })
+      .addCase(fetchCurrentUser.rejected, (state) => { state.isLoading = false; state.user = null; state.isLoggedIn = false; localStorage.removeItem('user'); localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); });
   },
 });
 

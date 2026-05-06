@@ -72,6 +72,23 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Space Grotesk', sans-serif; font-weight: 600; 
 a { color: var(--primary); text-decoration: none; transition: var(--transition); }
 
 /* ─── Layout ─────────────────────────────────────────────── */
+.top-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--primary-light);
+  width: 100%;
+  z-index: 9999;
+  animation: loading-bar 2s infinite ease-in-out;
+}
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
 .dashboard-layout {
   display: flex;
   min-height: 100vh;

@@ -5,7 +5,7 @@ export interface User {
   created_at?: string;
 }
 
-export type UserRole = 'admin' | 'doctor' | 'patient';
+export type UserRole = 'admin' | 'doctor' | 'patient' | 'cashier';
 
 export interface LoginCredentials {
   email: string;

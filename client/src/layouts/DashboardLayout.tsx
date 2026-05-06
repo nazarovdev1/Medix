@@ -6,21 +6,33 @@ import toast from 'react-hot-toast';
 import {
   MdDashboard, MdPeople, MdLocalHospital, MdCalendarToday,
   MdPayment, MdScience, MdDescription, MdLogout,
-  MdMedicalServices, MdHealthAndSafety,
+  MdMedicalServices, MdHealthAndSafety, MdAdminPanelSettings,
 } from 'react-icons/md';
+
+type UserRole = 'admin' | 'doctor' | 'cashier';
 
 interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
+  roles: UserRole[];
+  section: 'main' | 'clinic' | 'admin';
 }
 
 const navItems: NavItem[] = [
-  { to: '/',             label: 'Boshqaruv Paneli',    icon: <MdDashboard /> },
-  { to: '/patients',     label: 'Bemorlar',            icon: <MdPeople /> },
-  { to: '/doctors',      label: 'Doktorlar',           icon: <MdLocalHospital /> },
-  { to: '/appointments', label: 'Turnilar',            icon: <MdCalendarToday /> },
-  { to: '/payments',     label: 'To\'lovlar',          icon: <MdPayment /> },
+  // Main section
+  { to: '/',             label: 'Boshqaruv Paneli', icon: <MdDashboard />,         roles: ['admin','doctor','cashier'], section: 'main' },
+  { to: '/patients',     label: 'Bemorlar',         icon: <MdPeople />,            roles: ['admin','doctor','cashier'], section: 'main' },
+  { to: '/appointments', label: 'Turnilar',         icon: <MdCalendarToday />,     roles: ['admin','doctor'],           section: 'main' },
+  { to: '/payments',     label: "To'lovlar",        icon: <MdPayment />,           roles: ['admin','cashier'],          section: 'main' },
+  // Clinic section
+  { to: '/services',     label: 'Xizmatlar',        icon: <MdMedicalServices />,   roles: ['admin','doctor','cashier'], section: 'clinic' },
+  { to: '/diagnostics',  label: 'Diagnostika',      icon: <MdScience />,           roles: ['admin','doctor'],           section: 'clinic' },
+  { to: '/prescriptions',label: 'Dori Reseptlari',  icon: <MdDescription />,       roles: ['admin','doctor'],           section: 'clinic' },
+  // Admin section
+  { to: '/doctors',      label: 'Doktorlar',        icon: <MdLocalHospital />,     roles: ['admin'],                    section: 'admin' },
+  { to: '/departments',  label: "Bo'limlar",        icon: <MdHealthAndSafety />,   roles: ['admin'],                    section: 'admin' },
+  { to: '/audit-logs',   label: 'Audit Loglar',     icon: <MdAdminPanelSettings />,roles: ['admin'],                    section: 'admin' },
 ];
 
 export default function DashboardLayout() {
@@ -34,38 +46,55 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
+  const role = (user?.role ?? 'cashier') as UserRole;
+
+  const mainItems   = navItems.filter(i => i.section === 'main'   && i.roles.includes(role));
+  const clinicItems = navItems.filter(i => i.section === 'clinic'  && i.roles.includes(role));
+  const adminItems  = navItems.filter(i => i.section === 'admin'   && i.roles.includes(role));
+
+  const renderLink = (item: NavItem) => (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      end={item.to === '/'}
+      className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+    >
+      <span className="nav-icon">{item.icon}</span>
+      {item.label}
+    </NavLink>
+  );
+
   return (
     <div className="dashboard-layout">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <div className="logo-icon" style={{ fontSize: '1.75rem', color: 'var(--primary-light)' }}><MdHealthAndSafety /></div>
+          <div className="logo-icon" style={{ fontSize: '1.75rem', color: 'var(--primary-light)' }}>
+            <MdHealthAndSafety />
+          </div>
           <h1>Medix</h1>
         </div>
 
         <nav className="sidebar-nav">
-          <div className="nav-section-title">Asosiy Menyu</div>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
+          {mainItems.length > 0 && (
+            <>
+              <div className="nav-section-title">Asosiy Menyu</div>
+              {mainItems.map(renderLink)}
+            </>
+          )}
 
-          <div className="nav-section-title" style={{ marginTop: 16 }}>Klinik</div>
-          <NavLink to="/services"     className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon"><MdMedicalServices /></span> Xizmatlar
-          </NavLink>
-          <NavLink to="/diagnostics"  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon"><MdScience /></span> Diagnostika
-          </NavLink>
-          <NavLink to="/prescriptions" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <span className="nav-icon"><MdDescription /></span> Dori Reseptlari
-          </NavLink>
+          {clinicItems.length > 0 && (
+            <>
+              <div className="nav-section-title" style={{ marginTop: 16 }}>Klinik</div>
+              {clinicItems.map(renderLink)}
+            </>
+          )}
+
+          {adminItems.length > 0 && (
+            <>
+              <div className="nav-section-title" style={{ marginTop: 16 }}>Boshqaruv</div>
+              {adminItems.map(renderLink)}
+            </>
+          )}
         </nav>
 
         <div className="sidebar-footer">

@@ -138,3 +138,5 @@ export const departmentService = {
   delete: (id: string): Promise<void> =>
     api.delete(`/departments/${id}`) as unknown as Promise<void>,
 };
+
+export { api };

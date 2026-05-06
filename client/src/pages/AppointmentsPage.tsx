@@ -5,7 +5,7 @@ import {
   createAppointment,
   updateAppointmentStatus,
 } from '../features/appointments/appointmentsSlice';
-import { patientService, doctorService } from '../services/clinicApi';
+import { patientService, doctorService, appointmentService } from '../services/clinicApi';
 import { MdAdd, MdSearch, MdFilterList, MdClose } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { STATUSES, defaultAppointmentForm } from '../types';
@@ -19,6 +19,7 @@ import type {
 export default function AppointmentsPage() {
   const dispatch = useAppDispatch();
   const { items, meta, isLoading } = useAppSelector((s) => s.appointments);
+  const user = useAppSelector((s) => s.auth.user);
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<AppointmentFormData>(defaultAppointmentForm);
@@ -61,6 +62,17 @@ export default function AppointmentsPage() {
       toast.success(`Holat yangilandi: ${status}`);
     } else {
       toast.error(result.payload || 'Yangilashda xatolik');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Haqiqatdan ham ushbu turnini o\'chirmoqchimisiz?')) return;
+    try {
+      await appointmentService.delete(id);
+      toast.success('Turni o\'chirildi');
+      dispatch(fetchAppointments({ page, status: statusFilter || undefined }));
+    } catch (e) {
+      toast.error('O\'chirishda xatolik');
     }
   };
 
@@ -121,14 +133,60 @@ export default function AppointmentsPage() {
                 <td>{a.appt_date}</td>
                 <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
                 <td>
-                  <select
-                    value={a.status}
-                    onChange={(e) => handleStatusChange(a.id, e.target.value as AppointmentStatus)}
-                    className="form-select"
-                    style={{ width: 140 }}
-                  >
-                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {user?.role === 'doctor' ? (
+                      <>
+                        {a.status === 'scheduled' && (
+                          <button 
+                            className="btn btn-primary btn-sm" 
+                            onClick={() => handleStatusChange(a.id, 'confirmed' as AppointmentStatus)}
+                          >
+                            Qabul qilish
+                          </button>
+                        )}
+                        {(a.status === 'confirmed' || a.status === 'in_progress') && (
+                          <button 
+                            className="btn btn-success btn-sm" 
+                            onClick={() => {
+                              handleStatusChange(a.id, 'in_progress' as AppointmentStatus);
+                              // navigate to process page (will create it next)
+                              window.location.href = `/diagnostics?appointmentId=${a.id}`;
+                            }}
+                          >
+                            Boshlash
+                          </button>
+                        )}
+                        <select
+                          value={a.status}
+                          onChange={(e) => handleStatusChange(a.id, e.target.value as AppointmentStatus)}
+                          className="form-select form-select-sm"
+                          style={{ width: 120 }}
+                        >
+                          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <select
+                          value={a.status}
+                          onChange={(e) => handleStatusChange(a.id, e.target.value as AppointmentStatus)}
+                          className="form-select form-select-sm"
+                          style={{ width: 140 }}
+                        >
+                          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {user?.role === 'admin' && (
+                          <button 
+                            className="btn btn-sm btn-danger" 
+                            style={{ padding: '4px 8px' }}
+                            onClick={() => handleDelete(a.id)}
+                          >
+                            O'chirish
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

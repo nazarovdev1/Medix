@@ -22,3 +22,5 @@ export type {
 } from './payment';
 export { PAYMENT_STATUSES, PAYMENT_METHODS, defaultPaymentForm } from './payment';
 export type { PaginationMeta, PaginatedResponse, PaginationQuery } from './api';
+export type { Diagnostic, DiagnosticFormData } from './diagnostic';
+export type { Prescription, PrescriptionFormData } from './prescription';

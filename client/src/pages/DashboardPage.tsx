@@ -22,18 +22,6 @@ const StatCard = ({ icon, label, value, color, iconBg }: StatCardProps) => (
   </div>
 );
 
-interface RecentRowProps {
-  item: Appointment;
-}
-
-const RecentRow = ({ item }: RecentRowProps) => (
-  <tr>
-    <td style={{ fontWeight: 500 }}>{item.patient_name}</td>
-    <td>{item.doctor_name}</td>
-    <td>{item.appt_date}</td>
-    <td><span className={`badge badge-${item.status}`}>{item.status}</span></td>
-  </tr>
-);
 
 interface DashboardStats {
   patients?: number;
@@ -78,30 +66,73 @@ export default function DashboardPage() {
       </div>
 
       <div className="stats-grid">
-        <StatCard icon={<MdPeople />}          label="Jami Bemorlar"      value={stats.patients}     color="#4f6ef7" iconBg="rgba(79,110,247,0.15)" />
-        <StatCard icon={<MdLocalHospital />}   label="Jami Doktorlar"       value={stats.doctors}      color="#10b981" iconBg="rgba(16,185,129,0.15)" />
-        <StatCard icon={<MdCalendarToday />}   label="Jami Turnilar"  value={stats.appointments} color="#f59e0b" iconBg="rgba(245,158,11,0.15)" />
-        <StatCard icon={<MdPayment />}         label="Jami To'lovlar"      value={stats.payments}     color="#3b82f6" iconBg="rgba(59,130,246,0.15)" />
+        <StatCard 
+          icon={<MdPeople />} 
+          label={user?.role === 'doctor' ? 'Mening Bemorlarim' : 'Jami Bemorlar'} 
+          value={stats.patients} 
+          color="#4f6ef7" 
+          iconBg="rgba(79,110,247,0.15)" 
+        />
+        
+        {user?.role === 'admin' && (
+          <StatCard 
+            icon={<MdLocalHospital />} 
+            label="Jami Doktorlar" 
+            value={stats.doctors} 
+            color="#10b981" 
+            iconBg="rgba(16,185,129,0.15)" 
+          />
+        )}
+
+        <StatCard 
+          icon={<MdCalendarToday />} 
+          label={user?.role === 'doctor' ? 'Mening Turnilarim' : 'Jami Turnilar'} 
+          value={stats.appointments} 
+          color="#f59e0b" 
+          iconBg="rgba(245,158,11,0.15)" 
+        />
+
+        {(user?.role === 'admin' || user?.role === 'cashier') && (
+          <StatCard 
+            icon={<MdPayment />} 
+            label="Jami To'lovlar" 
+            value={stats.payments} 
+            color="#3b82f6" 
+            iconBg="rgba(59,130,246,0.15)" 
+          />
+        )}
       </div>
 
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
           <MdTrendingUp style={{ color: 'var(--primary)', fontSize: '1.3rem' }} />
-          <h3 style={{ fontSize: '1rem' }}>Oxirgi Turnilar</h3>
+          <h3 style={{ fontSize: '1rem' }}>
+            {user?.role === 'doctor' ? 'Mening Oxirgi Turnilarim' : 'Oxirgi Turnilar'}
+          </h3>
         </div>
         <div className="table-wrapper" style={{ border: 'none' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Bemor</th><th>Doktor</th><th>Sana</th><th>Holat</th>
+                <th>Bemor</th>
+                {user?.role !== 'doctor' && <th>Doktor</th>}
+                <th>Sana</th>
+                <th>Holat</th>
               </tr>
             </thead>
             <tbody>
               {recent.length > 0
-                ? recent.map((r) => <RecentRow key={r.id} item={r} />)
+                ? recent.map((r) => (
+                  <tr key={r.id}>
+                    <td style={{ fontWeight: 500 }}>{r.patient_name}</td>
+                    {user?.role !== 'doctor' && <td>{r.doctor_name}</td>}
+                    <td>{r.appt_date}</td>
+                    <td><span className={`badge badge-${r.status}`}>{r.status}</span></td>
+                  </tr>
+                ))
                 : (
                   <tr>
-                    <td colSpan={4} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>
+                    <td colSpan={user?.role === 'doctor' ? 3 : 4} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>
                       Turni topilmadi
                     </td>
                   </tr>

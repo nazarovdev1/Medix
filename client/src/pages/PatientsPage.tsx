@@ -9,6 +9,7 @@ import type { Patient, PatientFormData } from '../types';
 export default function PatientsPage() {
   const dispatch = useAppDispatch();
   const { items, meta, isLoading } = useAppSelector((s) => s.patients);
+  const user = useAppSelector((s) => s.auth.user);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PatientFormData>(defaultPatientForm);
@@ -78,9 +79,11 @@ export default function PatientsPage() {
           <h2>Bemorlar</h2>
           <p>{meta?.total ?? 0} ta ro'yxatdan o'tgan bemor</p>
         </div>
-        <button id="add-patient-btn" className="btn btn-primary" onClick={handleAdd}>
-          <MdAdd /> Bemor Qo'shish
-        </button>
+        {user?.role === 'admin' && (
+          <button id="add-patient-btn" className="btn btn-primary" onClick={handleAdd}>
+            <MdAdd /> Bemor Qo'shish
+          </button>
+        )}
       </div>
 
       <div className="filter-bar">
@@ -96,14 +99,15 @@ export default function PatientsPage() {
           <thead>
             <tr>
               <th>Ism</th><th>Jins</th><th>Tug'ilgan sana</th><th>Telefon</th>
-              <th>Email</th><th>Qon gruppasi</th><th>Amallar</th>
+              <th>Email</th><th>Qon gruppasi</th>
+              {user?.role === 'admin' && <th>Amallar</th>}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7}><div className="loading-center"><span className="spinner" /></div></td></tr>
+              <tr><td colSpan={user?.role === 'admin' ? 7 : 6}><div className="loading-center"><span className="spinner" /></div></td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>Bemor topilmadi</td></tr>
+              <tr><td colSpan={user?.role === 'admin' ? 7 : 6} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>Bemor topilmadi</td></tr>
             ) : items.map((p) => (
               <tr key={p.id}>
                 <td style={{ fontWeight: 600 }}>{p.first_name} {p.last_name}</td>
@@ -112,12 +116,14 @@ export default function PatientsPage() {
                 <td style={{ color: 'var(--text-secondary)' }}>{p.phone || '—'}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{p.email || '—'}</td>
                 <td><span className="badge">{p.blood_type || '—'}</span></td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-sm btn-secondary btn-icon" title="Tahrirlash" onClick={() => handleEdit(p)}><MdEdit /></button>
-                    <button className="btn btn-sm btn-danger btn-icon" title="O'chirish" onClick={() => handleDelete(p.id, `${p.first_name} ${p.last_name}`)}><MdDelete /></button>
-                  </div>
-                </td>
+                {user?.role === 'admin' && (
+                  <td>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-sm btn-secondary btn-icon" title="Tahrirlash" onClick={() => handleEdit(p)}><MdEdit /></button>
+                      <button className="btn btn-sm btn-danger btn-icon" title="O'chirish" onClick={() => handleDelete(p.id, `${p.first_name} ${p.last_name}`)}><MdDelete /></button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

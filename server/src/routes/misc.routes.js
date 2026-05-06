@@ -19,6 +19,13 @@ const serviceSchema = {
 };
 const uuidParam = { params: Joi.object({ id: Joi.string().uuid().required() }) };
 
+/**
+ * @swagger
+ * /services:
+ *   get:
+ *     summary: Get all services
+ *     tags: [Clinic]
+ */
 router.get('/services', async (req, res, next) => {
   try {
     const meta = { limit: Math.min(parseInt(req.query.limit,10)||20, 100), offset: (parseInt(req.query.page,10)-1||0)*20 };
@@ -27,6 +34,14 @@ router.get('/services', async (req, res, next) => {
   } catch(err) { next(err); }
 });
 
+/**
+ * @swagger
+ * /services:
+ *   post:
+ *     summary: Create clinic service
+ *     tags: [Clinic]
+ *     security: [{ BearerAuth: [] }]
+ */
 router.post('/services', authenticate, authorize('admin'), validate(serviceSchema), async (req, res, next) => {
   try {
     const svc = await serviceRepo.create(req.body);
@@ -56,6 +71,13 @@ const deptSchema = {
   }),
 };
 
+/**
+ * @swagger
+ * /departments:
+ *   get:
+ *     summary: Get all departments
+ *     tags: [Clinic]
+ */
 router.get('/departments', async (req, res, next) => {
   try {
     const depts = await deptRepo.findAll();
@@ -85,6 +107,14 @@ router.delete('/departments/:id', authenticate, authorize('admin'), async (req, 
 });
 
 // ─── Audit Logs ───────────────────────────────────────────
+/**
+ * @swagger
+ * /audit-logs:
+ *   get:
+ *     summary: Get system audit logs
+ *     tags: [Admin]
+ *     security: [{ BearerAuth: [] }]
+ */
 router.get('/audit-logs', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     const page  = parseInt(req.query.page, 10) || 1;
@@ -103,6 +133,13 @@ router.get('/audit-logs', authenticate, authorize('admin'), async (req, res, nex
 });
 
 // ─── Health Check ─────────────────────────────────────────
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: System health check
+ *     tags: [Status]
+ */
 router.get('/health', async (_req, res) => {
   try {
     await db.query('SELECT 1');

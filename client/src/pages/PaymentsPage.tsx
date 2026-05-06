@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, type ChangeEvent, type FormEvent } from 'react';
+import { useAppSelector } from '../app/hooks';
 import { paymentService, appointmentService } from '../services/clinicApi';
 import { MdAdd, MdFilterList, MdClose } from 'react-icons/md';
 import toast from 'react-hot-toast';
@@ -14,6 +15,8 @@ export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [appointments, setAppts] = useState<Appointment[]>([]);
+
+  const user = useAppSelector((s) => s.auth.user);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,9 +35,11 @@ export default function PaymentsPage() {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    appointmentService.getAll({ limit: 100, status: 'completed' })
-      .then((r) => setAppts(r.data || [])).catch(() => {});
-  }, []);
+    if (user?.role !== 'doctor') {
+      appointmentService.getAll({ limit: 100, status: 'completed' })
+        .then((r) => setAppts(r.data || [])).catch(() => {});
+    }
+  }, [user?.role]);
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -80,9 +85,11 @@ export default function PaymentsPage() {
           <h2>To'lovlar</h2>
           <p>{paginationMeta?.total ?? 0} ta to'lov qaydi</p>
         </div>
-        <button id="add-payment-btn" className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <MdAdd /> To'lovni Qayd Qilish
-        </button>
+        {user?.role !== 'doctor' && (
+          <button id="add-payment-btn" className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <MdAdd /> To'lovni Qayd Qilish
+          </button>
+        )}
       </div>
 
       <div className="filter-bar">
@@ -105,14 +112,15 @@ export default function PaymentsPage() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>ID</th><th>Bemor</th><th>Turni</th><th>Miqdor</th><th>Usul</th><th>Holat</th><th>Sana</th><th>Amallar</th>
+              <th>ID</th><th>Bemor</th><th>Turni</th><th>Miqdor</th><th>Usul</th><th>Holat</th><th>Sana</th>
+              {user?.role !== 'doctor' && <th>Amallar</th>}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={8}><div className="loading-center"><span className="spinner" /></div></td></tr>
+              <tr><td colSpan={user?.role === 'doctor' ? 7 : 8}><div className="loading-center"><span className="spinner" /></div></td></tr>
             ) : payments.length === 0 ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>To'lov topilmadi</td></tr>
+              <tr><td colSpan={user?.role === 'doctor' ? 7 : 8} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>To'lov topilmadi</td></tr>
             ) : payments.map((p) => (
               <tr key={p.id}>
                 <td style={{ color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.id}</td>
@@ -126,16 +134,18 @@ export default function PaymentsPage() {
                   </span>
                 </td>
                 <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{p.created_at ? new Date(p.created_at).toLocaleDateString('uz-UZ') : '—'}</td>
-                <td>
-                  <select
-                    value={p.status}
-                    onChange={(e) => handleStatusUpdate(p.id, e.target.value as PaymentStatus)}
-                    className="form-select"
-                    style={{ width: 120 }}
-                  >
-                    {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </td>
+                {user?.role !== 'doctor' && (
+                  <td>
+                    <select
+                      value={p.status}
+                      onChange={(e) => handleStatusUpdate(p.id, e.target.value as PaymentStatus)}
+                      className="form-select form-select-sm"
+                      style={{ width: 120 }}
+                    >
+                      {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -168,6 +178,10 @@ export default function PaymentsPage() {
                     #{a.id} - {a.patient_name} / {a.doctor_name} ({a.appt_date})
                   </option>)}
                 </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Miqdor (so'm)</label>
+                <input name="amount" type="number" className="form-input" value={form.amount} onChange={(e) => setForm(p => ({...p, amount: parseFloat(e.target.value) || 0}))} required />
               </div>
               <div className="form-group">
                 <label className="form-label">Usul</label>

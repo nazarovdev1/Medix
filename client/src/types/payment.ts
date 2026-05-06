@@ -35,11 +35,13 @@ export const PAYMENT_METHODS: readonly PaymentMethod[] = [
 export interface PaymentFormData {
   appointment_id: string;
   payment_method: PaymentMethod;
+  amount: number;
   notes: string;
 }
 
 export const defaultPaymentForm: PaymentFormData = {
   appointment_id: '',
   payment_method: 'card',
+  amount: 0,
   notes: '',
 };

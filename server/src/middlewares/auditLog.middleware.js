@@ -21,9 +21,8 @@ const writeAuditLog = async ({ tableName, recordId, action, changedBy, ipAddress
   }
 };
 
-/**
- * Express middleware — automatically logs mutating requests.
- */
+
+
 const auditLog = (tableName) => (req, _res, next) => {
   req._auditTable = tableName;
   req._auditIp    = req.ip;

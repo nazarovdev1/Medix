@@ -11,6 +11,10 @@ import PatientsPage from './pages/PatientsPage';
 import DoctorsPage from './pages/DoctorsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import PaymentsPage from './pages/PaymentsPage';
+import DiagnosticsPage from './pages/DiagnosticsPage';
+import PrescriptionsPage from './pages/PrescriptionsPage';
+import DepartmentsPage from './pages/DepartmentsPage';
+import AuditLogsPage from './pages/AuditLogsPage';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -43,6 +47,10 @@ export default function App() {
         <Route path="doctors"      element={<DoctorsPage />} />
         <Route path="appointments" element={<AppointmentsPage />} />
         <Route path="payments"     element={<PaymentsPage />} />
+        <Route path="diagnostics"  element={<DiagnosticsPage />} />
+        <Route path="prescriptions" element={<PrescriptionsPage />} />
+        <Route path="departments"   element={<DepartmentsPage />} />
+        <Route path="audit-logs"    element={<AuditLogsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
